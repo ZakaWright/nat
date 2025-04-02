@@ -1,0 +1,121 @@
+use pnet::datalink;
+use pnet::packet::ethernet::{EthernetPacket, EtherTypes};
+use pnet::packet::Packet;
+use pnet::packet::ipv4::Ipv4Packet;
+use pnet::packet::ip::IpNextHeaderProtocols;
+use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
+use std::thread;
+
+
+fn main() {
+    // read available interfaces
+    let interfaces = datalink::interfaces();
+    // set alice and bob interfaces
+    // TODO set up somethng to read the interfaces and automatically set them properly
+    let interface_alice = interfaces[2].clone();
+    let interface_bob = interfaces[3].clone();
+
+    // Start threads to handle multiple listeners
+    let handle_alice = thread::spawn(move || {
+        start_listener(&interface_alice);
+    });
+    let handle_bob = thread::spawn(move || {
+        start_listener(&interface_bob);
+    });
+    
+    // Join the handles to main to keep threads open
+    handle_alice.join().unwrap();
+    handle_bob.join().unwrap();
+
+    // keeping to prevent warnings
+    list_interfaces(interfaces);
+
+}
+
+fn list_interfaces(interfaces: Vec<datalink::NetworkInterface>) {
+    // loop through interfaces and print information
+    for interface in interfaces {
+        println!("{}: {} - {}", interface.index, interface.name, interface.ips[0]);
+    }
+}
+
+fn start_listener(interface: &datalink::NetworkInterface) {
+    // adapted from "Tutorial: Capturing Network Packets with pnet in Rust" by Cyprien Avico
+
+    // reads the tx and rx objects from the datalink channel for the interface
+    let (_, mut rx) = match datalink::channel(&interface, Default::default()) {
+        Ok(datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
+        Ok(_) => panic!("Unhandled channel type: {}", & interface),
+        Err(e) => panic!("An error occured when creating the datalink channel: {}", e),
+    };
+
+    println!("Start reading packets on {} ({})", interface.name, interface.ips[0]);
+    // will read packets until exit
+    loop {
+        match rx.next() {
+            Ok(packet) => {
+                // reads layer 2 from the packet
+                // unrwap prevents empty values from creating an error, I think
+                let ethernet_packet = EthernetPacket::new(packet).unwrap();
+                process_packets(&ethernet_packet);
+            },
+            Err(e) => {
+                panic!("An error occured while reading: {}", e);
+            }
+        }
+    }
+}
+
+fn process_packets(ethernet_packet: &EthernetPacket) {
+    // read the Ethernet Type
+    match ethernet_packet.get_ethertype() {
+        EtherTypes::Ipv4 => {
+            // convert layer 2 packet to Ipv4 packet
+            if let Some(ipv4_packet) = Ipv4Packet::new(ethernet_packet.payload()) {
+                // reads the protocol
+                match ipv4_packet.get_next_level_protocol() {
+                    IpNextHeaderProtocols::Icmp => {
+                        println!("ICMP: {} -> {}", 
+                            ipv4_packet.get_source(), ipv4_packet.get_destination());
+                    }
+                    IpNextHeaderProtocols::Tcp => {                        
+                        process_tcp(&ipv4_packet);
+                    }
+                    _ => {
+                        // handle all other protocols
+                    }
+                }
+            }
+        }
+        _  => {
+            // Handle all other EtherTypes (eg Ipv6)
+        }
+    }
+}
+
+fn process_tcp(packet: &Ipv4Packet) {
+    // read layer4 data from layer3 packet
+    if let Some(tcp) = TcpPacket::new(packet.payload()) {
+        println!("TCP Packet {}:{} -> {}:{}",
+            packet.get_source(), tcp.get_source(),
+            packet.get_destination(), tcp.get_destination()
+        );
+
+        // TODO map the ports
+
+        // convert to mutable TCP packet to edit before sending
+        // used Claude.ai to help generate this code block
+        // create a buffer to set the minimum length of the packet
+        let mut buffer = vec![0u8; tcp.packet().len]
+        // create a new mutable TCP packet and handdle errors
+        let mut mutable_tcp = MutableTcpPacket::new(&mut buffer)
+            .expect("Failed to create mutable TCP packet");
+        // clone the tcp packet into the mutable tcp variable
+        mutable_tcp = tcp.clone_from(tcp);
+        rewrite_tcp(&MutableTcpPacket);
+    }
+}
+
+fn rewrite_tcp(tcp: &MutableTcpPacket) {
+    // TODO
+}
