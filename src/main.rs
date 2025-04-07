@@ -6,8 +6,11 @@ use pnet::packet::ip::IpNextHeaderProtocols;
 use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
 use std::thread;
 
+mod connections;
+
 
 fn main() {
+    connections::test_function();
     // read available interfaces
     let interfaces = datalink::interfaces();
     // set alice and bob interfaces
@@ -106,16 +109,16 @@ fn process_tcp(packet: &Ipv4Packet) {
         // convert to mutable TCP packet to edit before sending
         // used Claude.ai to help generate this code block
         // create a buffer to set the minimum length of the packet
-        let mut buffer = vec![0u8; tcp.packet().len]
+        //let mut buffer = vec![0u8; tcp.packet().len()];
         // create a new mutable TCP packet and handdle errors
-        let mut mutable_tcp = MutableTcpPacket::new(&mut buffer)
-            .expect("Failed to create mutable TCP packet");
+        //let mut mutable_tcp = MutableTcpPacket::new(&mut buffer).expect("Failed to create mutable TCP packet");
         // clone the tcp packet into the mutable tcp variable
-        mutable_tcp = tcp.clone_from(tcp);
-        rewrite_tcp(&MutableTcpPacket);
+        //mutable_tcp = tcp.clone_from(tcp);
+        //let mut mutable_tcp = MutableTcpPacket::new(tcp).expect("Failed to create a mutable TCP packet");//tcp.from_packet(tcp);
+        //rewrite_tcp(&MutableTcpPacket);
     }
 }
 
-fn rewrite_tcp(tcp: &MutableTcpPacket) {
+//fn rewrite_tcp(tcp: &MutableTcpPacket) {
     // TODO
-}
+//}
