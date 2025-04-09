@@ -3,10 +3,10 @@ use pnet::packet::ethernet::{EthernetPacket, EtherTypes};
 use pnet::packet::Packet;
 use pnet::packet::ipv4::Ipv4Packet;
 use pnet::packet::ip::IpNextHeaderProtocols;
-use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
+//use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
 use std::thread;
 use std::net::Ipv4Addr;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 mod connections;
 
@@ -20,9 +20,9 @@ fn main() {
     let interface_bob = interfaces[3].clone();
     
     // Connections vector
-    let connections: Arc<Vec<connections::Connection>> = Arc::new(Vec::new());
-    let connections_alice = Arc::clone(&connections);
-    let connections_bob = Arc::clone(&connections);
+    let connections_arc: Arc<Mutex<Vec<connections::Connection>>> = Arc::new(Mutex::new(Vec::new()));
+    let connections_alice = Arc::clone(&connections_arc);
+    let connections_bob = Arc::clone(&connections_arc);
 
     // Start threads to handle multiple listeners
     let handle_alice = thread::spawn(move || {
@@ -39,7 +39,7 @@ fn main() {
 }
 
 
-fn start_listener(interface: &datalink::NetworkInterface, connections: Arc<Vec<connections::Connection>>) {
+fn start_listener(interface: &datalink::NetworkInterface, connections: Arc<Mutex<Vec<connections::Connection>>>) {
     // adapted from "Tutorial: Capturing Network Packets with pnet in Rust" by Cyprien Avico
 
     // reads the tx and rx objects from the datalink channel for the interface
@@ -68,7 +68,7 @@ fn start_listener(interface: &datalink::NetworkInterface, connections: Arc<Vec<c
     }
 }
 
-fn process_packets(ethernet_packet: &EthernetPacket, connections: Arc<Vec<connections::Connection>>) {
+fn process_packets(ethernet_packet: &EthernetPacket, connections: Arc<Mutex<Vec<connections::Connection>>>) {
     // read the Ethernet Type
     match ethernet_packet.get_ethertype() {
         EtherTypes::Ipv4 => {
@@ -95,41 +95,18 @@ fn process_packets(ethernet_packet: &EthernetPacket, connections: Arc<Vec<connec
     }
 }
 
-fn process_tcp(packet: &Ipv4Packet, connections: Arc<Vec<connections::Connection>>) {
+fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Connection>>>) {
     let natIP_alice: Ipv4Addr = Ipv4Addr::new(192, 168, 1, 5);
     let natIP_bob: Ipv4Addr = Ipv4Addr::new(10, 0, 1, 5);
     // determine if already mapped
     if packet.get_source() == natIP_alice || packet.get_destination() == natIP_alice || packet.get_source() == natIP_bob || packet.get_destination() == natIP_bob {
         println!("Already mapped");
-        let new_packet = connections::unmap_tcp(packet, connections);
+        //let new_packet = connections::unmap_tcp(packet, connections);
     } else {
-        let new_packet = connections::remap_tcp(packet, connections, natIP_alice, natIP_bob);
+        if let Ok(mut connections_vec) = connections.lock() {
+            if let Some(new_packet) = connections::remap_tcp(packet, & mut connections_vec, natIP_alice, natIP_bob) {
+                // send packet
+            }
+        }
     }
-
-    /*
-    // read layer4 data from layer3 packet
-    if let Some(tcp) = TcpPacket::new(packet.payload()) {
-        println!("TCP Packet {}:{} -> {}:{}",
-            packet.get_source(), tcp.get_source(),
-            packet.get_destination(), tcp.get_destination()
-        );
-
-        // TODO map the ports
-
-        // convert to mutable TCP packet to edit before sending
-        // used Claude.ai to help generate this code block
-        // create a buffer to set the minimum length of the packet
-        //let mut buffer = vec![0u8; tcp.packet().len()];
-        // create a new mutable TCP packet and handle errors
-        //let mut mutable_tcp = MutableTcpPacket::new(&mut buffer).expect("Failed to create mutable TCP packet");
-        // clone the tcp packet into the mutable tcp variable
-        //mutable_tcp = tcp.clone_from(tcp);
-        //let mut mutable_tcp = MutableTcpPacket::new(tcp).expect("Failed to create a mutable TCP packet");//tcp.from_packet(tcp);
-        //rewrite_tcp(&MutableTcpPacket);
-    }
-    */
 }
-
-//fn rewrite_tcp(tcp: &MutableTcpPacket) {
-    // TODO
-//}
