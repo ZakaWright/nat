@@ -15,15 +15,47 @@ pub struct Connection {
     remapped_destination_port: u16,
 }
 
-pub fn remap_tcp (packet: & Ipv4Packet, connections: & mut Vec<Connection>, natIP_alice: Ipv4Addr, natIP_bob: Ipv4Addr) -> Option<TcpPacket<'static>> {
+pub fn remap (packet: & Ipv4Packet, connections: & mut Vec<Connection>, nat_ip_alice: Ipv4Addr, nat_ip_bob: Ipv4Addr) -> Option<Ipv4Packet<'static>> {
     // only need to remap the source IP. Check to see which IP to use
+    let alice_subnet: Ipv4Network = "192.168.1.0/24".parse().unwrap();
+    let nat_ip: Ipv4Addr = if alice_subnet.contains(packet.get_source()) {
+        nat_ip_bob
+    } else {
+        nat_ip_alice
+    };
+    // if let Some(new_packet) = connections::remap(packet, & mut connections_vec, natIP_alice, natIP_bob)
+    if let Some(old_source_port, new_tcp_packet) = remap_tcp(packet) {
+        // TODO replace tcp in the packet
+        // could just create a new Ipv4 header with the Ipv4Packet::populate() function and just modify the source?
+        // TODO create the whole packet
+
+
+        // debugging
+        println!("Adding connection: {}:{} ({}:{}) -> {}:{}",
+            packet.get_source(), tcp.get_source(),
+            natIP, new_port,
+            packet.get_destination(), tcp.get_destination()
+        );
+        
+        connections.push(Connection {
+                source_ip: packet.get_source(),
+                source_port: new_tcp_packet.get_source(),
+                destination_ip: packet.get_destination(),
+                destination_port: new_tcp_packet.get_destination(),
+                remapped_source_ip: natIP,
+                remapped_destination_port: old_source_port,
+        });
+        // more debugging
+        println!("Total connections: {}", connections.len());
+    }
+}
+
+pub fn remap_tcp (packet: & Ipv4Packet) -> (u16, Option<TcpPacket<'static>>) {
+//pub fn remap_tcp (packet: & Ipv4Packet, connections: & mut Vec<Connection>, natIP_alice: Ipv4Addr, natIP_bob: Ipv4Addr) -> Option<TcpPacket<'static>> {
+    
     if let Some(tcp) = TcpPacket::new(packet.payload()) {
-        let alice_subnet: Ipv4Network = "192.168.1.0/24".parse().unwrap();
-        let natIP: Ipv4Addr = if alice_subnet.contains(packet.get_source()) {
-            natIP_bob
-        } else {
-            natIP_alice
-        };
+        // track old source port
+        let old_source_port = tcp.get_source();
         // generate new random port number
         let new_port = rand::thread_rng().gen_range(49152..65535);
 
@@ -35,28 +67,11 @@ pub fn remap_tcp (packet: & Ipv4Packet, connections: & mut Vec<Connection>, natI
         // set the new port
         // mutable_tcp modifies the buffer directly
         mutable_tcp.set_source(new_port);
-
-        // debugging
-        println!("Adding connection: {}:{} ({}:{}) -> {}:{}",
-            packet.get_source(), tcp.get_source(),
-            natIP, new_port,
-            packet.get_destination(), tcp.get_destination()
-        );
-        
-        connections.push(Connection {
-                source_ip: packet.get_source(),
-                source_port: tcp.get_source(),
-                destination_ip: packet.get_destination(),
-                destination_port: tcp.get_destination(),
-                remapped_source_ip: natIP,
-                remapped_destination_port: new_port,
-        });
-        // more debugging
-        println!("Total connections: {}", connections.len());
+        // TODO new checksum
 
         // Create a new TcpPacket that owns the buffer to prevent lifetime issues and returns it
-        Some(TcpPacket::owned(buffer)
-            .expect("Failed to create TcpPacket from buffer"))
+        Some(old_source_port, (TcpPacket::owned(buffer)
+            .expect("Failed to create TcpPacket from buffer")))
     } else {
         None
     }

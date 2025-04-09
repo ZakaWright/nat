@@ -96,15 +96,15 @@ fn process_packets(ethernet_packet: &EthernetPacket, connections: Arc<Mutex<Vec<
 }
 
 fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Connection>>>) {
-    let natIP_alice: Ipv4Addr = Ipv4Addr::new(192, 168, 1, 5);
-    let natIP_bob: Ipv4Addr = Ipv4Addr::new(10, 0, 1, 5);
+    let nat_ip_alice: Ipv4Addr = Ipv4Addr::new(192, 168, 1, 5);
+    let nat_ip_bob: Ipv4Addr = Ipv4Addr::new(10, 0, 1, 5);
     // determine if already mapped
-    if packet.get_source() == natIP_alice || packet.get_destination() == natIP_alice || packet.get_source() == natIP_bob || packet.get_destination() == natIP_bob {
+    if packet.get_source() == nat_ip_alice || packet.get_destination() == nat_ip_alice || packet.get_source() == nat_ip_bob || packet.get_destination() == nat_ip_bob {
         println!("Already mapped");
         //let new_packet = connections::unmap_tcp(packet, connections);
     } else {
         if let Ok(mut connections_vec) = connections.lock() {
-            if let Some(new_packet) = connections::remap_tcp(packet, & mut connections_vec, natIP_alice, natIP_bob) {
+            if let Some(new_packet) = connections::remap(packet, & mut connections_vec, nat_ip_alice, nat_ip_bob) {
                 // send packet
             }
         }
