@@ -5,3 +5,5 @@ edition = "2024"
 
 [dependencies]
 pnet = "0.34.0"
+rand = "0.8"
+ipnetwork = "0.21"
