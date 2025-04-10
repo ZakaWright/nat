@@ -5,8 +5,9 @@ use pnet::packet::ipv4::Ipv4Packet;
 use pnet::packet::ip::IpNextHeaderProtocols;
 //use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
 use std::thread;
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, IpAddr};
 use std::sync::{Arc, Mutex};
+use pnet::transport::{transport_channel, TransportChannelType::Layer3};
 
 mod connections;
 
@@ -99,14 +100,25 @@ fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Conn
     let nat_ip_alice: Ipv4Addr = Ipv4Addr::new(192, 168, 1, 5);
     let nat_ip_bob: Ipv4Addr = Ipv4Addr::new(10, 0, 1, 5);
     // determine if already mapped
-    if packet.get_source() == nat_ip_alice || packet.get_destination() == nat_ip_alice || packet.get_source() == nat_ip_bob || packet.get_destination() == nat_ip_bob {
-        println!("Already mapped");
-        //let new_packet = connections::unmap_tcp(packet, connections);
-    } else {
-        if let Ok(mut connections_vec) = connections.lock() {
+    if let Ok(mut connections_vec) = connections.lock() {
+        if packet.get_source() == nat_ip_alice || packet.get_destination() == nat_ip_alice || packet.get_source() == nat_ip_bob || packet.get_destination() == nat_ip_bob {
+            // already mapped
+            if let Some(new_packet) = connections::unmap(packet, & mut connections_vec) {
+                send_packet_tcp(new_packet);
+            }
+        } else {
             if let Some(new_packet) = connections::remap(packet, & mut connections_vec, nat_ip_alice, nat_ip_bob) {
-                // send packet
+                send_packet_tcp(new_packet);
             }
         }
     }
+}
+
+fn send_packet_tcp (packet: Ipv4Packet<'static>) -> std::io::Result<()> {
+    // based on generated prompt from ChatGPT
+    // the transport channel has to set a value for an rx buffer. 1500 is from Ethernet MTU
+    // the layer 3 parameter sets the provided input to Layer3 containint a TCP packet
+    let (mut tx, _) = transport_channel(1500, Layer3(IpNextHeaderProtocols::Tcp))?;
+    tx.send_to(&packet, IpAddr::V4(packet.get_destination()))?;
+    Ok(())
 }

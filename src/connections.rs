@@ -111,7 +111,7 @@ pub fn remap_tcp (packet: & Ipv4Packet, nat_ip: &Ipv4Addr) -> (Option<u16>, Opti
 
 }
 
-pub fn unmap (packet: & Ipv4Packet, connections: & mut Vec<Connection>, nat_ip_alice: Ipv4Addr, nat_ip_bob: Ipv4Addr) -> Option<Ipv4Packet<'static>> {
+pub fn unmap (packet: & Ipv4Packet, connections: & mut Vec<Connection>) -> Option<Ipv4Packet<'static>> {
     // find the connection
     if let Some(tcp) = TcpPacket::new(packet.payload()) {
         if let Some(connection) = connections.iter().find(|c|
