@@ -110,7 +110,7 @@ fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Conn
                 if let Some(new_packet) = connections::unmap(packet, & mut connections_vec) {
                     send_packet_tcp(new_packet);
                 } 
-            else {
+            } else {
                 send_packet_tcp(packet.clone());
             }
         } else {
