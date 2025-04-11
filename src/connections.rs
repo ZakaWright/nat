@@ -119,13 +119,13 @@ pub fn set_tcp (tcp: & TcpPacket, source_ip: Ipv4Addr, destination_ip: Ipv4Addr,
     tcp_psuedo_header.extend_from_slice(&destination_ip.octets());
     tcp_psuedo_header.push(0);
     tcp_psuedo_header.push(pnet::packet::ip::IpNextHeaderProtocols::Tcp.0);
-    let tcp_length = (mutable_tcp.get_data_offset() as u16) * 4;
+    let tcp_length = (mutable_tcp.get_data_offset() as u16);
     tcp_psuedo_header.extend_from_slice(&tcp_length.to_be_bytes());
     tcp_psuedo_header.extend_from_slice(&mutable_tcp.packet());
     let new_checksum = checksum(&tcp_psuedo_header, 0);
     // set the new checksum
-    //mutable_tcp.set_checksum(new_checksum);
-    mutable_tcp.set_checksum(0);
+    mutable_tcp.set_checksum(new_checksum);
+    //mutable_tcp.set_checksum(0);
     
     Some(TcpPacket::owned(buffer))
         .expect("Failed to create TcpPacket from buffer")
