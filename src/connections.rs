@@ -45,6 +45,23 @@ pub fn remap (packet: & Ipv4Packet, connections: & mut Vec<Connection>, nat_ip_a
         } else {
             // generate the new port number
             source_port = rand::thread_rng().gen_range(49152..65535); 
+                    // debugging
+            println!("Adding connection: {}:{} ({}:{}) -> {}:{}",
+                source_ip, source_port,
+                original_source_ip, original_source_port,
+                destination_ip, destination_port
+            );
+            
+            connections.push(Connection {
+                    source_ip: original_source_ip,
+                    source_port: original_source_port,
+                    destination_ip: destination_ip,
+                    destination_port: destination_port,
+                    remapped_source_ip: source_ip,
+                    remapped_source_port: source_port,
+            });
+            // more debugging
+            println!("Total connections: {}", connections.len());
         }
         if let Some(new_tcp_packet) = set_tcp(&tcp, source_ip, destination_ip, source_port, destination_port) {
             // replace tcp in the packet
@@ -66,23 +83,7 @@ pub fn remap (packet: & Ipv4Packet, connections: & mut Vec<Connection>, nat_ip_a
         // calculate and set the new IP checksum
         new_ip_packet.set_checksum(checksum(new_ip_packet.packet(), 0));
 
-        // debugging
-        println!("Adding connection: {}:{} ({}:{}) -> {}:{}",
-            source_ip, source_port,
-            original_source_ip, original_source_port,
-            destination_ip, destination_port
-        );
-        
-        connections.push(Connection {
-                source_ip: original_source_ip,
-                source_port: original_source_port,
-                destination_ip: destination_ip,
-                destination_port: destination_port,
-                remapped_source_ip: source_ip,
-                remapped_source_port: source_port,
-        });
-        // more debugging
-        println!("Total connections: {}", connections.len());
+
 
         Some(Ipv4Packet::owned(buffer)
             .expect("Failed to create Ipv4Packet"))
