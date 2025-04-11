@@ -125,6 +125,11 @@ pub fn set_tcp (tcp: & TcpPacket, source_ip: Ipv4Addr, destination_ip: Ipv4Addr,
     let tcp_length = (mutable_tcp.packet().len() as u16);
     tcp_psuedo_header.extend_from_slice(&tcp_length.to_be_bytes());
     tcp_psuedo_header.extend_from_slice(&mutable_tcp.packet());
+
+    if tcp_psuedo_header.len() % 2 != 0 {
+        // add padding
+        tcp_psuedo_header.push(0);
+    }
     let new_checksum = checksum(&tcp_psuedo_header, 0);
     // set the new checksum
     mutable_tcp.set_checksum(new_checksum);
