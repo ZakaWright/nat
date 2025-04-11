@@ -111,6 +111,7 @@ pub fn set_tcp (tcp: & TcpPacket, source_ip: Ipv4Addr, destination_ip: Ipv4Addr,
     // mutable_tcp modifies the buffer directly
     mutable_tcp.set_source(source_port);
     mutable_tcp.set_destination(destination_port);
+    mutable_tcp.set_checksum(0);
 
     // new checksum
     // adapted from ChatGPT prompt (not a lot of documentation or code samples for this)
