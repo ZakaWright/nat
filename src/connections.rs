@@ -2,9 +2,7 @@ use std::net::{Ipv4Addr};
 use pnet::packet::{Packet, MutablePacket};
 use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
 use pnet::packet::ipv4::{Ipv4Packet, MutableIpv4Packet};
-//use pnet::packet::ipv4;
 use rand::Rng;
-//use std::sync::Arc;
 use pnet::util::checksum;
 use ipnetwork::Ipv4Network;
 
@@ -71,7 +69,7 @@ pub fn remap (packet: & Ipv4Packet, connections: & mut Vec<Connection>, nat_ip_a
             println!("Total connections: {}", connections.len());
         }
         if let Some(new_tcp_packet) = set_tcp(&tcp, source_ip, destination_ip, source_port, destination_port) {
-            // replace tcp in the packet
+        // replace tcp in the packet
         // get the length for the buffer
         // the * 4 is because the header length returns the number of words in the header, *4 will give the correct length
         let packet_length = packet.get_header_length() as usize * 4 + new_tcp_packet.packet().len() as usize;

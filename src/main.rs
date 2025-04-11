@@ -3,7 +3,6 @@ use pnet::packet::ethernet::{EthernetPacket, EtherTypes};
 use pnet::packet::Packet;
 use pnet::packet::ipv4::Ipv4Packet;
 use pnet::packet::ip::IpNextHeaderProtocols;
-//use pnet::packet::tcp::{MutableTcpPacket, TcpPacket};
 use std::thread;
 use std::net::{Ipv4Addr, IpAddr};
 use std::sync::{Arc, Mutex};
