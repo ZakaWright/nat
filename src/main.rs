@@ -27,9 +27,11 @@ fn main() {
 
     // Start threads to handle multiple listeners
     let handle_alice = thread::spawn(move || {
+        println!("Starting listener for Alice on {} ({})", interface_alice.name, interface_alice.ips[0]);
         start_listener(&interface_alice, connections_alice);
     });
     let handle_bob = thread::spawn(move || {
+        println!("Starting listener for Bob on {} ({})", interface_bob.name, interface_bob.ips[0]);
         start_listener(&interface_bob, connections_bob);
     });
     
