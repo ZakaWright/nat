@@ -58,7 +58,7 @@ fn start_listener(interface: &datalink::NetworkInterface, connections: Arc<Mutex
         match rx.next() {
             Ok(packet) => {
                 // create new handle to the connections vector
-                println!("Packet received on {}", interface.name);
+                //println!("Packet received on {}", interface.name);
                 let connections = Arc::clone(&connections);
                 // reads layer 2 from the packet
                 // unrwap prevents empty values from creating an error, I think

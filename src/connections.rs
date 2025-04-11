@@ -42,11 +42,18 @@ pub fn remap (packet: & Ipv4Packet, connections: & mut Vec<Connection>, nat_ip_a
                 c.source_port == original_source_port
         ) {
             source_port = connection.remapped_source_port;
+            // debugging
+            println!("Connection found: {}:{} (original {}:{}) -> {}:{}",
+                source_ip, source_port,
+                original_source_ip, original_source_port,
+                destination_ip, destination_port
+            );
+            
         } else {
             // generate the new port number
             source_port = rand::thread_rng().gen_range(49152..65535); 
-                    // debugging
-            println!("Adding connection: {}:{} ({}:{}) -> {}:{}",
+            // debugging
+            println!("Adding connection: {}:{} (original {}:{}) -> {}:{}",
                 source_ip, source_port,
                 original_source_ip, original_source_port,
                 destination_ip, destination_port
