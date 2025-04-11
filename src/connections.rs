@@ -133,6 +133,10 @@ pub fn set_tcp (tcp: & TcpPacket, source_ip: Ipv4Addr, destination_ip: Ipv4Addr,
 pub fn unmap (packet: & Ipv4Packet, connections: & mut Vec<Connection>) -> Option<Ipv4Packet<'static>> {
     // find the connection
     if let Some(tcp) = TcpPacket::new(packet.payload()) {
+        println!("Unmapping TCP packet: {}:{} -> {}:{}",
+            packet.get_source(), tcp.get_source(),
+            packet.get_destination(), tcp.get_destination()
+        );
         if let Some(connection) = connections.iter().find(|c|
             c.remapped_source_ip == packet.get_destination() &&
             c.remapped_source_port == tcp.get_destination()
