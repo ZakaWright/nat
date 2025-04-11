@@ -75,7 +75,7 @@ fn process_packets(ethernet_packet: &EthernetPacket, connections: Arc<Mutex<Vec<
         EtherTypes::Ipv4 => {
             // convert layer 2 packet to Ipv4 packet
             if let Some(ipv4_packet) = Ipv4Packet::new(ethernet_packet.payload()) {
-                // reads the protocol
+                // reads the protocol type
                 match ipv4_packet.get_next_level_protocol() {
                     IpNextHeaderProtocols::Icmp => {
                         println!("ICMP: {} -> {}", 
@@ -101,6 +101,7 @@ fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Conn
     let nat_ip_bob: Ipv4Addr = Ipv4Addr::new(10, 0, 1, 5);
     // determine if already mapped
     if let Ok(mut connections_vec) = connections.lock() {
+        debug!("Connections vector: {:?}", connections_vec);
         if packet.get_source() == nat_ip_alice || packet.get_destination() == nat_ip_alice || packet.get_source() == nat_ip_bob || packet.get_destination() == nat_ip_bob {
             // already mapped
             if let Some(new_packet) = connections::unmap(packet, & mut connections_vec) {
