@@ -111,7 +111,7 @@ fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Conn
                     send_packet_tcp(new_packet);
                 } 
             } else {
-                send_packet_tcp(packet.clone());
+                //send_packet_tcp(packet.to_owned());
             }
         } else {
             if let Some(new_packet) = connections::remap(packet, & mut connections_vec, nat_ip_alice, nat_ip_bob) {
