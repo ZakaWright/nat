@@ -105,7 +105,7 @@ fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Conn
     // determine if already mapped
     if let Ok(mut connections_vec) = connections.lock() {
         //if packet.get_source() == nat_ip_alice || packet.get_destination() == nat_ip_alice || packet.get_source() == nat_ip_bob || packet.get_destination() == nat_ip_bob {
-        if packet.get_destination() == nat_ip_alice || packet.get_destination() == nat_ip_bob {}
+        if packet.get_destination() == nat_ip_alice || packet.get_destination() == nat_ip_bob {
             // already mapped
             if let Some(new_packet) = connections::unmap(packet, & mut connections_vec) {
                 send_packet_tcp(new_packet);
