@@ -109,9 +109,10 @@ fn process_tcp(packet: &Ipv4Packet, connections: Arc<Mutex<Vec<connections::Conn
                 // already mapped
                 if let Some(new_packet) = connections::unmap(packet, & mut connections_vec) {
                     send_packet_tcp(new_packet);
-                } else {
-                    send_packet_tcp(packet.clone());
-                }
+                } 
+            else {
+                send_packet_tcp(packet.clone());
+            }
         } else {
             if let Some(new_packet) = connections::remap(packet, & mut connections_vec, nat_ip_alice, nat_ip_bob) {
                 send_packet_tcp(new_packet);
