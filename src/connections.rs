@@ -116,7 +116,7 @@ pub fn set_tcp (tcp: & TcpPacket, source_ip: Ipv4Addr, destination_ip: Ipv4Addr,
     tcp_psuedo_header.extend_from_slice(&mutable_tcp.packet());
     let new_checksum = checksum(&tcp_psuedo_header, 0);
     // set the new checksum
-    mutable_tcp.set_checksum(0);
+    mutable_tcp.set_checksum(new_checksum);
     
     Some(TcpPacket::owned(buffer))
         .expect("Failed to create TcpPacket from buffer")
