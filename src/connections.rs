@@ -8,6 +8,7 @@ use rand::Rng;
 use pnet::util::checksum;
 use ipnetwork::Ipv4Network;
 
+#[derive(Debug)]
 pub struct Connection {
     source_ip: Ipv4Addr,
     source_port: u16,
